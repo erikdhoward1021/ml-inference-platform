@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  model-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: ml-inference-server
+    ports:
+      - "8000:8000"  # API port
+      - "9090:9090"  # Metrics port (for Prometheus integration)
+    environment:
+      - MODEL_NAME=all-MiniLM-L6-v2
+      - LOG_LEVEL=INFO
+      - MAX_BATCH_SIZE=32
+      - MODEL_CACHE_DIR=/home/mluser/.cache/torch/sentence_transformers
+    volumes:
+      # Mount source code for development (comment out for production)
+      - ./src:/app/src:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - ml-network
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # Redis for feature store integration
+  redis:
+    image: redis:7-alpine
+    container_name: ml-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - ml-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+networks:
+  ml-network:
+    driver: bridge
+
+volumes:
+  redis-data:

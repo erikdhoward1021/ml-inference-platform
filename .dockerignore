@@ -1,0 +1,70 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+*.egg-info/
+dist/
+build/
+
+# Testing
+tests/
+test_*.py
+*_test.py
+conftest.py
+
+# Development
+.git/
+.gitignore
+.github/
+*.md
+!README.md
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Documentation
+docs/
+*.rst
+LICENSE
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Kubernetes
+k8s/
+*.yaml
+*.yml
+!docker-compose.yml
+
+# Build artifacts
+*.log
+*.pid
+*.seed
+*.pid.lock
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+locustfile.py
+benchmark/
+notebooks/
+.mypy_cache/
+.ruff_cache/
