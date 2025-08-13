@@ -19,6 +19,10 @@ ml-inference-platform/
 
 ── requirements.txt # Python dependencies
 
+── requirements-dev.txt # Python dependencies including packages for development
+
+── .env.example # Example structure and content of needed .env file
+
 ## Setup
 
 (Coming soon)
