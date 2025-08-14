@@ -1,0 +1,11 @@
+# Namespace creates an isolated environment for this particular ML platform
+# This keeps these resources organized and separated from other applications
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ml-platform
+  labels:
+    name: ml-platform
+    environment: development
+    app.kubernetes.io/name: ml-inference-platform
+    app.kubernetes.io/part-of: ml-platform

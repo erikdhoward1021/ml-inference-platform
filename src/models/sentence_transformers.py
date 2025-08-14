@@ -30,6 +30,7 @@ class ModelManager:
     def __init__(self):
         self._model = None
         self.model_name = settings.MODEL_NAME
+        self.cache_dir = settings.MODEL_CACHE_DIR
         self.model_loaded = False
         self.load_time = None
 
@@ -44,15 +45,15 @@ class ModelManager:
             logger.info("Model already loaded, skipping...")
             return
 
-        logger.info(f"Loading model: {self.model_name}")
+        model_path = self.cache_dir / self.model_name
+
+        logger.info(f"Loading model from local path: {model_path}")
         start_time = time.time()
 
         try:
             # Load model with explicit cache directory
             # This ensures models are cached between container restarts; testing to see if that is the case
-            self._model = SentenceTransformer(
-                self.model_name, cache_folder=settings.MODEL_CACHE_DIR
-            )
+            self._model = SentenceTransformer(str(model_path), device="cpu")
 
             self.load_time = time.time() - start_time
             self.model_loaded = True

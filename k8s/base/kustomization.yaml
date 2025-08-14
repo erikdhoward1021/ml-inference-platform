@@ -1,0 +1,32 @@
+# Kustomization defines which resources to include and how to transform them
+# This file ties together all our Kubernetes resources
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Namespace to apply to all resources
+namespace: ml-platform
+
+# List of resource files to include
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - deployment.yaml
+  - service.yaml
+  - poddisruptionbudget.yaml
+
+# Common labels applied to all resources
+labels:
+  - pairs:
+      app.kubernetes.io/managed-by: kustomize
+      environment: base
+    includeSelectors: false  # Don't add these to selector fields
+
+# Common annotations applied to all resources
+commonAnnotations:
+  version: "1.0.0"
+  team: ml-platform
+
+# Image configuration - makes it easy to update image tags
+images:
+  - name: ml-inference
+    newTag: latest

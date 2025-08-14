@@ -1,0 +1,155 @@
+# Management of lifecycle of ML inference pods
+# Ensures desired number of replicas are always running and handles updates
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-server
+  namespace: ml-platform
+  labels:
+    app: model-server
+    app.kubernetes.io/name: model-server
+    app.kubernetes.io/component: inference
+    app.kubernetes.io/part-of: ml-platform
+    version: v1
+spec:
+  # Start with 2 replicas for high availability
+  replicas: 2
+  
+  # Selector defines how the Deployment finds which Pods to manage
+  selector:
+    matchLabels:
+      app: model-server
+      
+  # Rolling update strategy ensures zero downtime during deployments
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1          # Allow 1 extra pod during updates
+      maxUnavailable: 0    # Don't kill any pods until new ones are ready
+      
+  # Template defines the pod specification
+  template:
+    metadata:
+      labels:
+        app: model-server
+        app.kubernetes.io/name: model-server
+        app.kubernetes.io/component: inference
+        version: v1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+        
+    spec:
+      # Ensure pods are distributed across nodes (when multiple nodes exist)
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - model-server
+              topologyKey: kubernetes.io/hostname
+              
+      # Security context for the entire pod
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+        
+      containers:
+      - name: model-server
+        image: ml-inference:latest
+        imagePullPolicy: IfNotPresent  # Use local image
+        
+        ports:
+        - name: http
+          containerPort: 8000
+          protocol: TCP
+        - name: metrics
+          containerPort: 9090
+          protocol: TCP
+          
+        # Environment variables from ConfigMap
+        envFrom:
+        - configMapRef:
+            name: model-config
+            
+        # Additional environment variables
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+              
+        # Mount the config file from ConfigMap
+        volumeMounts:
+        - name: config
+          mountPath: /app/config
+          readOnly: true
+          
+        # Resource requests and limits
+        resources:
+          requests:
+            memory: "1Gi"      # Guaranteed memory
+            cpu: "500m"         # Guaranteed CPU (0.5 cores)
+          limits:
+            memory: "2Gi"      # Maximum memory before OOM
+            cpu: "2000m"        # Maximum CPU (2 cores)
+            
+        # Liveness probe - restarts container if it fails
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 60    # Wait for model to load
+          periodSeconds: 30          # Check every 30 seconds
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3        # Restart after 3 failures
+          
+        # Readiness probe - removes pod from service if it fails
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 30    # Model should load by now
+          periodSeconds: 10          # Check every 10 seconds
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3        # Mark unready after 3 failures
+          
+        # Startup probe - gives time for initial model loading
+        startupProbe:
+          httpGet:
+            path: /health/ready
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 6        # Allow up to 60 seconds for startup
+          
+      # Volume definitions
+      volumes:
+      - name: config
+        configMap:
+          name: model-config
+          items:
+          - key: app-config.yaml
+            path: app-config.yaml

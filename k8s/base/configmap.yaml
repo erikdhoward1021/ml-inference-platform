@@ -1,0 +1,55 @@
+# ConfigMap stores configuration data that can be consumed by pods
+# This allows for changes to application behavior without rebuilding the container
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: model-config
+  namespace: ml-platform
+  labels:
+    app: model-server
+    app.kubernetes.io/name: model-config
+    app.kubernetes.io/component: configuration
+    app.kubernetes.io/part-of: ml-platform
+data:
+  # Model configuration
+  MODEL_NAME: "all-MiniLM-L6-v2"
+  MODEL_CACHE_DIR: "/app/models"
+  
+  # API configuration
+  MAX_BATCH_SIZE: "32"
+  REQUEST_TIMEOUT: "30"
+
+  # Feature store configuration (for Redis integration)
+  FEATURE_CACHE_TTL: "3600"
+  FEATURE_CACHE_ENABLED: "false"
+  
+  # Monitoring configuration
+  METRICS_ENABLED: "true"
+  LOG_LEVEL: "INFO"
+  
+  # Performance tuning
+  WORKERS_PER_CORE: "2"
+  MAX_WORKERS: "4"
+  
+  # Model warmup configuration
+  WARMUP_REQUESTS: "10"
+  
+  # Application configuration as a file (example of mounting a whole config file)
+  app-config.yaml: |
+    server:
+      host: 0.0.0.0
+      port: 8000
+      workers: 4
+    
+    model:
+      version: v1
+      confidence_threshold: 0.7
+      max_sequence_length: 512
+    
+    monitoring:
+      prometheus_enabled: true
+      metrics_port: 9090
+      
+    cache:
+      redis_enabled: false
+      ttl_seconds: 3600

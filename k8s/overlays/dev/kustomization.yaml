@@ -1,0 +1,53 @@
+# Development overlay - customizes the base configuration for development environment
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Reference to base configuration
+bases:
+  - ../../base
+
+# Namespace override for development
+namespace: ml-platform-dev
+
+# Development-specific labels
+labels:
+  - pairs:
+      environment: development
+    includeSelectors: false
+
+# Patches to modify base resources for development
+patches:
+  # Reduce replicas for development to save resources
+  - patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
+    target:
+      kind: Deployment
+      name: model-server
+      
+  # Reduce resource requests/limits for development
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "512Mi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "250m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "1Gi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: "1000m"
+    target:
+      kind: Deployment
+      name: model-server
+
+# Override ConfigMap values for development
+configMapGenerator:
+  - name: model-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=DEBUG
+      - WARMUP_REQUESTS=1

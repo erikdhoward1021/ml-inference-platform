@@ -1,0 +1,25 @@
+# PodDisruptionBudget ensures minimum availability during voluntary disruptions
+# This prevents all pods from being terminated simultaneously during updates or node maintenance
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: model-server-pdb
+  namespace: ml-platform
+  labels:
+    app: model-server
+    app.kubernetes.io/name: model-server-pdb
+    app.kubernetes.io/component: availability
+    app.kubernetes.io/part-of: ml-platform
+spec:
+  # Ensure at least 1 pod is always available
+  minAvailable: 1
+  
+  # Selector determines which pods this budget protects
+  selector:
+    matchLabels:
+      app: model-server
+      
+  # This determines when unhealthy pods can be evicted
+  # IfHealthyBudget: evict unhealthy pods only if it doesn't violate the budget
+  # AlwaysAllow: always evict unhealthy pods
+  unhealthyPodEvictionPolicy: IfHealthyBudget

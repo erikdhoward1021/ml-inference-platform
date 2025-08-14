@@ -24,7 +24,7 @@ class Settings:
 
     # Model Configuration
     MODEL_NAME: str = os.getenv("MODEL_NAME", "all-MiniLM-L6-v2")
-    MODEL_CACHE_DIR: str = os.getenv("MODEL_CACHE_DIR", "/tmp/models")
+    MODEL_CACHE_DIR: str = Path(os.getenv("MODEL_CACHE_DIR", "/app/models"))
 
     # Performance Settings
     MAX_BATCH_SIZE: int = int(os.getenv("MAX_BATCH_SIZE", "32"))

@@ -1,0 +1,39 @@
+# Service provides a stable network endpoint for accessing our pods
+# Load balances traffic across all ready pods matching the selector
+apiVersion: v1
+kind: Service
+metadata:
+  name: model-service
+  namespace: ml-platform
+  labels:
+    app: model-server
+    app.kubernetes.io/name: model-service
+    app.kubernetes.io/component: networking
+    app.kubernetes.io/part-of: ml-platform
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"  # Use Network LB on AWS
+spec:
+  type: LoadBalancer  # Creates an external load balancer (in cloud environments)
+  
+  # Selector determines which pods receive traffic from this service
+  selector:
+    app: model-server
+
+  # Ensures requests from the same client go to the same pod
+  # Useful for stateful connections or caching
+  sessionAffinity: None  # Set this to "ClientIP" for sticky sessions
+  
+  ports:
+  - name: http
+    port: 80           # Port exposed by the service
+    targetPort: http   # Port on the container (references the named port)
+    protocol: TCP
+  - name: metrics
+    port: 9090
+    targetPort: metrics
+    protocol: TCP
+    
+  # Health check configuration for cloud load balancers
+  # Only uncomment these lines when deploying to cloud environments with external traffic policy set to Local
+  # healthCheckNodePort: 30000
+  # externalTrafficPolicy: Local  # Preserves client source IP but may cause uneven load distribution
