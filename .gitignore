@@ -8,6 +8,7 @@ env/
 venv/
 ENV/
 .venv
+.gitignore
 
 # IDEs
 .vscode/
@@ -34,3 +35,4 @@ htmlcov/
 dist/
 build/
 *.egg-info/
+.dockerignore
