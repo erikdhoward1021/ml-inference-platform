@@ -35,6 +35,7 @@ conftest.py
 *.swp
 *.swo
 *~
+.continue/
 
 # Documentation
 docs/
