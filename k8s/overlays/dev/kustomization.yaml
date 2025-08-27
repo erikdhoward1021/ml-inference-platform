@@ -4,7 +4,7 @@ kind: Kustomization
 
 # Reference to base configuration
 bases:
-  - ../../base
+  - ../base
 
 # Namespace override for development
 namespace: ml-platform-dev
