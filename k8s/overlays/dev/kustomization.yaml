@@ -3,8 +3,8 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 # Reference to base configuration
-bases:
-  - ../base
+resources:
+  - ../../base
 
 # Namespace override for development
 namespace: ml-platform-dev
@@ -17,6 +17,11 @@ labels:
 
 # Patches to modify base resources for development
 patches:
+  - path: patch-model-config.yaml
+    target:
+      kind: ConfigMap
+      name: model-config
+
   # Reduce replicas for development to save resources
   - patch: |-
       - op: replace
@@ -43,11 +48,3 @@ patches:
     target:
       kind: Deployment
       name: model-server
-
-# Override ConfigMap values for development
-configMapGenerator:
-  - name: model-config
-    behavior: merge
-    literals:
-      - LOG_LEVEL=DEBUG
-      - WARMUP_REQUESTS=1
