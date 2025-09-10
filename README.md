@@ -1,90 +1,76 @@
-# ML Inference Platform
-A production-ready machine learning inference service built with FastAPI and sentence-transformers, designed to run on Kubernetes with observability, autoscaling, and GitOps best practices.
+# LLM-Augmented Book Recommendation Platform
+
+A production-ready hybrid recommendation system combining collaborative filtering with fine-tuned language models for context-aware book recommendations. Built with FastAPI, Kubernetes deployment, and observability best practices.
+
+## Architecture
+
+**Hybrid Approach:**
+- Traditional collaborative filtering for user-item patterns
+- Fine-tuned small language model (mlx-lm) for contextual recommendations
+- Fusion layer combining both approaches for enhanced personalization
+
+**Dataset:** [Book Recommendation Dataset](https://www.kaggle.com/datasets/arashnic/book-recommendation-dataset) (Books, Ratings, Users)
 
 ## Project Structure
 ```
-ml-inference-platform
-├─ .dockerignore
-├─ .python-version
-├─ Dockerfile
-├─ Makefile
-├─ README.md
-├─ docker-compose.yml
-├─ k8s
-│  ├─ base
-│  │  ├─ configmap.yaml
-│  │  ├─ deployment.yaml
-│  │  ├─ hpa.yaml
-│  │  ├─ kustomization.yaml
-│  │  ├─ namespace.yaml
-│  │  ├─ poddisruptionbudget.yaml
-│  │  └─ service.yaml
-│  └─ overlays
-│     └─ dev
-│        └─ kustomization.yaml
-├─ notebooks
-│  └─ endpoint_test.ipynb
-├─ pyproject.toml
-├─ requirements-dev.txt
-├─ requirements.txt
-├─ src
-│  ├─ __init__.py
-│  ├─ api
-│  │  ├─ __init__.py
-│  │  ├─ main.py
-│  │  └─ schemas.py
-│  ├─ models
-│  │  ├─ __init__.py
-│  │  └─ sentence_transformers.py
-│  └─ utils
-│     ├─ __init__.py
-│     └─ config.py
-├─ tests
-│  ├─ __init__.py
-│  ├─ test_api.py
-│  └─ test_model.py
-└─ uv.lock
+llm-recommendation-platform
+├─ data/
+│  ├─ processed/              # Cleaned, processed datasets
+│  └─ raw/                    # Raw Kaggle datasets
+├─ scripts/
+│  ├─ download_data.py        # Kaggle dataset download
+│  ├─ prepare_data.py         # Data preprocessing pipeline
+│  ├─ train_cf_model.py       # Collaborative filtering training
+│  ├─ finetune_llm.py         # LLM fine-tuning (mlx-lm)
+│  └─ evaluate_models.py      # Model evaluation
+├─ src/
+│  ├─ data/
+│  │  ├─ loaders.py          # Data loading utilities (Polars)
+│  │  └─ processors.py       # Data cleaning and feature engineering
+│  ├─ models/
+│  │  ├─ collaborative_filtering.py  # Matrix factorization
+│  │  ├─ llm_recommender.py         # Fine-tuned LLM inference
+│  │  └─ hybrid_recommender.py      # Fusion model
+│  ├─ training/              # Training pipelines
+│  ├─ evaluation/            # Recommendation metrics
+│  └─ api/                   # FastAPI endpoints
+├─ k8s/                      # Kubernetes manifests
+├─ notebooks/                # Data exploration and analysis
+└─ tests/                    # Test suites
 ```
 
-## Setup
-1. Kubernetes Cluster
-   - Tested locally on Docker Desktop (M4 Max).
-   - Requires kubectl and optionally helm for monitoring stack.
-2. Deployment
+## Quick Start
 
-        `make k8s-deploy`
-    - Deploys model-server with:
-        - ConfigMap-based configuration
-        - Resource requests/limits
-        - Liveness, readiness, and startup probes
-        - PodDisruptionBudget
-        - Horizontal Pod Autoscaler (HPA) based on CPU/memory
-        - Service for HTTP + metrics ports
-3. Observability
-    - model-server exposes Prometheus metrics at /metrics (port 9090).
-    - Prometheus scrapes pod and HPA metrics.
-    - Grafana dashboards visualize:
-        - Current vs desired replicas
-        - Pod CPU/memory usage
-        - HPA scaling events in real time
-4. GitOps & CI/CD
-    - Manifests are fully declarative with Kustomize.
-    - Can be integrated with ArgoCD for automated deployment:
-        - Application points to Git repo, syncs changes automatically.
-        - Supports rollback and self-healing.
-        - Optional GitHub Actions workflow:
-    - Build & push Docker image
-    - Update Kustomize image tag
-    - Trigger ArgoCD to deploy new version
-5. Testing
-    - Unit tests: pytest for API and model modules.
-    - Load testing can demonstrate HPA behavior:
+1. **Data Setup**
+   ```bash
+   # Install kaggle CLI and set up credentials (~/.kaggle/kaggle.json)
+   python scripts/download_data.py
+   ```
 
-        `hey -z 2m -q 50 -c 10 http://<service-ip>/predict`
-6. Production-readiness Highlights
-    - HPA scales based on CPU/memory usage.
-    - Configurable via ConfigMap without rebuilding containers.
-    - PodDisruptionBudget ensures minimum availability during node maintenance.
-    - Resource requests/limits prevent overcommit.
-    - Observability via Prometheus + Grafana.
-    - Declarative manifests + GitOps enable repeatable, auditable deployments.
+2. **Development**
+   ```bash
+   pip install -r requirements.txt
+   jupyter notebook  # Explore data/notebooks/
+   ```
+
+3. **Production Deployment**
+   ```bash
+   make k8s-deploy
+   ```
+
+## Production Features
+
+- **Kubernetes-native**: HPA, resource limits, health checks
+- **Observability**: Prometheus metrics, Grafana dashboards
+- **GitOps**: ArgoCD integration, declarative manifests
+- **Testing**: Unit tests, load testing with `hey`
+- **Data Processing**: Fast Polars-based pipeline
+- **Model Serving**: Multi-model inference (CF + LLM)
+
+## Technology Stack
+
+- **ML**: PyTorch, mlx-lm, scikit-learn, Polars
+- **API**: FastAPI, Pydantic
+- **Infrastructure**: Kubernetes, Docker, ArgoCD
+- **Monitoring**: Prometheus, Grafana
+- **Data**: Kaggle Book Recommendation Dataset
